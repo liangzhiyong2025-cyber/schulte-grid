@@ -279,7 +279,6 @@
 </head>
 <body>
 <div class="container" id="app">
-    <!-- 主游戏界面 -->
     <div id="gameView">
         <div class="title">🧠 舒尔特方格</div>
         <div class="info-panel">
@@ -299,7 +298,6 @@
         <div class="footer">按顺序从 1 点击到 25 | 点错会累计失误次数</div>
     </div>
 
-    <!-- 排行榜弹窗 -->
     <div id="rankModal" class="modal-mask hidden" onclick="closeRank()">
         <div class="modal-container" onclick="event.stopPropagation()">
             <div style="font-size: 24px; font-weight: bold; margin-bottom: 16px;">🏆 最快记录</div>
@@ -310,7 +308,6 @@
         </div>
     </div>
 
-    <!-- 评分标准页面 -->
     <div id="standardPage" class="standard-page hidden">
         <div class="standard-header">
             <div class="standard-title">舒尔特方格评分标准</div>
@@ -433,9 +430,9 @@
         return records[0].time;
     }
 
-    // 完成游戏的核心逻辑
+    // 完成游戏
     function finishGame() {
-        if (completed) return;
+        if (completed) return;   // 防止多次调用
         completed = true;
         stopTiming();
         const finalTime = timeElapsed;
@@ -448,6 +445,9 @@
     function showSuccessModal(finalTime, finalErrors) {
         const best = getBestTime();
         const bestText = best !== null ? `${best} 秒` : '暂无记录';
+        // 移除可能已存在的旧弹窗
+        const oldModal = document.getElementById('successModal');
+        if (oldModal) oldModal.remove();
         const modalDiv = document.createElement('div');
         modalDiv.className = 'modal-mask';
         modalDiv.id = 'successModal';
@@ -475,23 +475,27 @@
     }
 
     function resetToCover() {
-        stopTiming();
+        // 停止所有活动
+        if (timer) clearInterval(timer);
+        timer = null;
         completed = false;
         started = false;
         isPlaying = false;
         nextTarget = 1;
         errorCount = 0;
         timeElapsed = 0;
+        // 重置数据
         gridData = new Array(totalCount).fill('?');
         correctStates = new Array(totalCount).fill(false);
         renderGrid();
         updateUI();
-        if (timer) clearInterval(timer);
-        timer = null;
     }
 
     function startGame() {
         if (started) return;
+        // 重置一切（确保干净状态）
+        resetToCover();
+        // 生成新数据
         const newGrid = generateRandomGrid();
         gridData = [...newGrid];
         correctStates = new Array(totalCount).fill(false);
@@ -521,7 +525,6 @@
         }
 
         if (number === currentTarget) {
-            // 正确点击
             correctStates[index] = true;
             nextTarget++;
             const cells = document.querySelectorAll('.grid-cell');
@@ -531,7 +534,6 @@
             updateUI();
 
             if (nextTarget === totalCount + 1) {
-                // 所有数字已按顺序点击完毕
                 finishGame();
             }
         } else {
