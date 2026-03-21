@@ -332,22 +332,20 @@
 
 <script>
     // ---------- 游戏状态 ----------
-    let gridData = [];          // 当前数字排列（一维数组）
-    let correctStates = [];     // 是否已正确点击
+    let gridData = [];
+    let correctStates = [];
     let nextTarget = 1;
-    let timeElapsed = 0;        // 秒
+    let timeElapsed = 0;
     let errorCount = 0;
-    let isPlaying = false;      // 计时是否进行中
+    let isPlaying = false;
     let completed = false;
-    let started = false;        // 是否已点击开始测试
+    let started = false;
     let timer = null;
     let startTime = 0;
     const totalCount = 25;
 
-    // 辅助函数
     function formatTime(sec) { return sec.toFixed(2); }
 
-    // 生成随机排列 1-25
     function generateRandomGrid() {
         let arr = Array.from({ length: totalCount }, (_, i) => i + 1);
         for (let i = arr.length - 1; i > 0; i--) {
@@ -357,7 +355,6 @@
         return arr;
     }
 
-    // 刷新界面（格子渲染）
     function renderGrid() {
         const gridDiv = document.getElementById('grid');
         gridDiv.innerHTML = '';
@@ -374,7 +371,6 @@
         }
     }
 
-    // 更新UI：用时、错误、下一个数字、按钮显隐
     function updateUI() {
         document.getElementById('timeDisplay').innerText = formatTime(timeElapsed) + ' s';
         document.getElementById('errorCount').innerText = errorCount;
@@ -398,7 +394,6 @@
         }
     }
 
-    // 开始计时
     function startTiming() {
         if (timer) clearInterval(timer);
         startTime = Date.now();
@@ -419,7 +414,6 @@
         isPlaying = false;
     }
 
-    // 保存记录
     function saveRecord(time, errors) {
         let records = localStorage.getItem('schulte_records');
         records = records ? JSON.parse(records) : [];
@@ -431,7 +425,6 @@
         localStorage.setItem('schulte_records', JSON.stringify(records));
     }
 
-    // 获取最快记录
     function getBestTime() {
         let records = localStorage.getItem('schulte_records');
         if (!records) return null;
@@ -440,12 +433,21 @@
         return records[0].time;
     }
 
-    // 完成游戏弹窗
-    function showSuccessModal() {
+    // 完成游戏的核心逻辑
+    function finishGame() {
+        if (completed) return;
+        completed = true;
+        stopTiming();
         const finalTime = timeElapsed;
+        const finalErrors = errorCount;
+        saveRecord(finalTime, finalErrors);
+        showSuccessModal(finalTime, finalErrors);
+        updateUI();
+    }
+
+    function showSuccessModal(finalTime, finalErrors) {
         const best = getBestTime();
         const bestText = best !== null ? `${best} 秒` : '暂无记录';
-        // 创建弹窗DOM
         const modalDiv = document.createElement('div');
         modalDiv.className = 'modal-mask';
         modalDiv.id = 'successModal';
@@ -472,7 +474,6 @@
         });
     }
 
-    // 重置到遮盖状态
     function resetToCover() {
         stopTiming();
         completed = false;
@@ -481,7 +482,6 @@
         nextTarget = 1;
         errorCount = 0;
         timeElapsed = 0;
-        // 填充问号
         gridData = new Array(totalCount).fill('?');
         correctStates = new Array(totalCount).fill(false);
         renderGrid();
@@ -490,7 +490,6 @@
         timer = null;
     }
 
-    // 开始游戏（点击开始测试）
     function startGame() {
         if (started) return;
         const newGrid = generateRandomGrid();
@@ -507,12 +506,12 @@
         updateUI();
     }
 
-    // 处理点击格子
     function onCellClick(index) {
         if (!started || completed) return;
         const number = gridData[index];
         const alreadyCorrect = correctStates[index];
         const currentTarget = nextTarget;
+
         if (alreadyCorrect) {
             errorCount++;
             updateUI();
@@ -520,24 +519,20 @@
             alert(`数字 ${number} 已完成，重复点击`);
             return;
         }
+
         if (number === currentTarget) {
-            // 正确
+            // 正确点击
             correctStates[index] = true;
             nextTarget++;
-            // 添加临时反馈类
             const cells = document.querySelectorAll('.grid-cell');
             cells[index].classList.add('tap-feedback');
             setTimeout(() => cells[index].classList.remove('tap-feedback'), 200);
             if (navigator.vibrate) navigator.vibrate(50);
             updateUI();
+
             if (nextTarget === totalCount + 1) {
-                // 完成
-                completed = true;
-                stopTiming();
-                const finalTime = timeElapsed;
-                saveRecord(finalTime, errorCount);
-                showSuccessModal();
-                updateUI();
+                // 所有数字已按顺序点击完毕
+                finishGame();
             }
         } else {
             errorCount++;
@@ -547,12 +542,10 @@
         }
     }
 
-    // 新的一局（重置）
     function resetGame() {
         resetToCover();
     }
 
-    // 排行榜展示
     function showRank() {
         let records = localStorage.getItem('schulte_records');
         records = records ? JSON.parse(records) : [];
@@ -574,9 +567,11 @@
         }
         document.getElementById('rankModal').classList.remove('hidden');
     }
+
     function closeRank() {
         document.getElementById('rankModal').classList.add('hidden');
     }
+
     function clearRecords() {
         if (confirm('确认清空所有历史记录吗？')) {
             localStorage.removeItem('schulte_records');
@@ -585,17 +580,16 @@
         }
     }
 
-    // 评分标准页面
     function showStandard() {
         document.getElementById('standardPage').classList.remove('hidden');
         document.getElementById('gameView').style.display = 'none';
     }
+
     function closeStandard() {
         document.getElementById('standardPage').classList.add('hidden');
         document.getElementById('gameView').style.display = 'block';
     }
 
-    // 初始化遮盖状态
     function init() {
         gridData = new Array(totalCount).fill('?');
         correctStates = new Array(totalCount).fill(false);
