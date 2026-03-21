@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>舒尔特方格 - 专注力训练</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px 12px 40px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .title {
+            font-size: 32px;
+            font-weight: 700;
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+        }
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            background: white;
+            border-radius: 30px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .info-item {
+            text-align: center;
+            flex: 1;
+        }
+        .info-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 6px;
+        }
+        .info-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+            white-space: nowrap;
+        }
+        .start-btn-wrapper {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+        .start-btn {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 14px 48px;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(46,204,113,0.3);
+            transition: 0.2s;
+        }
+        .next-tip {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border-radius: 50px;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            box-shadow: 0 4px 10px rgba(52,152,219,0.3);
+        }
+        .target-number {
+            font-size: 24px;
+            font-weight: 800;
+            background: rgba(255,255,255,0.3);
+            padding: 2px 12px;
+            border-radius: 40px;
+            display: inline-block;
+            margin-left: 8px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0;
+            background-color: #f8f9fa;
+            margin-bottom: 30px;
+            aspect-ratio: 1 / 1;
+        }
+        .grid-cell {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 44px;
+            font-weight: 600;
+            color: #2c3e50;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: none;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .grid-cell.tap-feedback {
+            background-color: #2ecc71 !important;
+            transition: background-color 0.05s linear;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .btn {
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 14px 0;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            background: #3498db;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .reset-btn { background: linear-gradient(135deg, #e67e22, #d35400); }
+        .rank-btn { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .standard-btn { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #95a5a6;
+            margin-top: 30px;
+        }
+        /* 弹窗样式 */
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-container {
+            width: 80%;
+            background: white;
+            border-radius: 32px;
+            padding: 24px;
+            text-align: center;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #e67e22;
+            margin-bottom: 16px;
+        }
+        .modal-time {
+            font-size: 26px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 12px 0;
+        }
+        .modal-best {
+            font-size: 18px;
+            color: #7f8c8d;
+            margin-bottom: 16px;
+        }
+        .modal-encourage {
+            font-size: 16px;
+            color: #27ae60;
+            margin-bottom: 24px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .modal-btn {
+            flex: 1;
+            border-radius: 40px;
+            padding: 10px 0;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+        .continue-btn {
+            background: #27ae60;
+            color: white;
+        }
+        .modal-standard-btn {
+            background: #9b59b6;
+            color: white;
+        }
+        /* 评分标准页面 */
+        .standard-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f8f9fa;
+            overflow-y: auto;
+            z-index: 2000;
+            padding: 20px;
+        }
+        .standard-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .standard-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .intro-text {
+            background: #f0f9ff;
+            border-radius: 20px;
+            padding: 12px;
+            font-size: 14px;
+            color: #2c3e50;
+            margin: 16px 0;
+            text-align: center;
+            line-height: 1.4;
+        }
+        .standard-table {
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .table-row {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+            border-bottom: 1px solid #ecf0f1;
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .table-header {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+            padding: 14px 8px;
+        }
+        .back-btn {
+            background: #3498db;
+            color: white;
+            border-radius: 50px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <!-- 主游戏界面 -->
+    <div id="gameView">
+        <div class="title">🧠 舒尔特方格</div>
+        <div class="info-panel">
+            <div class="info-item"><div class="info-label">用时</div><div class="info-value" id="timeDisplay">0.00 s</div></div>
+            <div class="info-item"><div class="info-label">错误</div><div class="info-value" id="errorCount">0</div></div>
+        </div>
+        <div id="startBtnWrapper" class="start-btn-wrapper">
+            <button class="start-btn" id="startBtn">开始测试</button>
+        </div>
+        <div id="nextTip" class="next-tip" style="display: none;">下一个数字: <span id="nextTarget" class="target-number">1</span></div>
+        <div id="grid" class="grid"></div>
+        <div id="actionButtons" class="action-buttons" style="display: none;">
+            <button class="btn reset-btn" id="resetBtn">新的一局</button>
+            <button class="btn rank-btn" id="rankBtn">排行榜</button>
+            <button class="btn standard-btn" id="standardBtn">评分标准</button>
+        </div>
+        <div class="footer">按顺序从 1 点击到 25 | 点错会累计失误次数</div>
+    </div>
+
+    <!-- 排行榜弹窗 -->
+    <div id="rankModal" class="modal-mask hidden" onclick="closeRank()">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div style="font-size: 24px; font-weight: bold; margin-bottom: 16px;">🏆 最快记录</div>
+            <div id="bestTimeText" style="font-size: 28px; font-weight: bold; color: #e67e22;">暂无记录</div>
+            <div style="margin: 20px 0; max-height: 300px; overflow-y: auto;" id="recordList"></div>
+            <button class="modal-btn continue-btn" onclick="clearRecords()">清空记录</button>
+            <button class="modal-btn" style="background:#95a5a6; color:white; margin-top: 10px;" onclick="closeRank()">关闭</button>
+        </div>
+    </div>
+
+    <!-- 评分标准页面 -->
+    <div id="standardPage" class="standard-page hidden">
+        <div class="standard-header">
+            <div class="standard-title">舒尔特方格评分标准</div>
+            <div class="intro-text">舒尔特方格是经典专注力训练游戏，通过快速按顺序点击数字，锻炼大脑反应速度和注意力，提升专注力与手眼协调。</div>
+        </div>
+        <div class="standard-table">
+            <div class="table-row table-header">
+                <span>年龄段</span><span>优秀</span><span>良好</span><span>中等</span><span>及格</span>
+            </div>
+            <div class="table-row"><span>5-6岁</span><span>&lt;30秒</span><span>30-40秒</span><span>40-48秒</span><span>&lt;55秒</span></div>
+            <div class="table-row"><span>7-11岁</span><span>&lt;26秒</span><span>26-32秒</span><span>32-40秒</span><span>&lt;45秒</span></div>
+            <div class="table-row"><span>12-17岁</span><span>&lt;16秒</span><span>16-18秒</span><span>19-23秒</span><span>&lt;24秒</span></div>
+            <div class="table-row"><span>18岁以上</span><span>&lt;12秒</span><span>13-16秒</span><span>17-19秒</span><span>&lt;20秒</span></div>
+        </div>
+        <div class="note" style="font-size:12px; color:#7f8c8d; text-align:center;">注：成绩均指完成全部25个数字所用的时间。</div>
+        <div class="back-btn" onclick="closeStandard()">返回游戏</div>
+    </div>
+</div>
+
+<script>
+    // ---------- 游戏状态 ----------
+    let gridData = [];          // 当前数字排列（一维数组）
+    let correctStates = [];     // 是否已正确点击
+    let nextTarget = 1;
+    let timeElapsed = 0;        // 秒
+    let errorCount = 0;
+    let isPlaying = false;      // 计时是否进行中
+    let completed = false;
+    let started = false;        // 是否已点击开始测试
+    let timer = null;
+    let startTime = 0;
+    const totalCount = 25;
+
+    // 辅助函数
+    function formatTime(sec) { return sec.toFixed(2); }
+
+    // 生成随机排列 1-25
+    function generateRandomGrid() {
+        let arr = Array.from({ length: totalCount }, (_, i) => i + 1);
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    // 刷新界面（格子渲染）
+    function renderGrid() {
+        const gridDiv = document.getElementById('grid');
+        gridDiv.innerHTML = '';
+        for (let i = 0; i < gridData.length; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.innerText = gridData[i];
+            cell.dataset.index = i;
+            cell.addEventListener('click', (e) => {
+                e.stopPropagation();
+                onCellClick(parseInt(cell.dataset.index));
+            });
+            gridDiv.appendChild(cell);
+        }
+    }
+
+    // 更新UI：用时、错误、下一个数字、按钮显隐
+    function updateUI() {
+        document.getElementById('timeDisplay').innerText = formatTime(timeElapsed) + ' s';
+        document.getElementById('errorCount').innerText = errorCount;
+        document.getElementById('nextTarget').innerText = nextTarget;
+        const startWrapper = document.getElementById('startBtnWrapper');
+        const nextTip = document.getElementById('nextTip');
+        const actionBtns = document.getElementById('actionButtons');
+        if (!started || completed) {
+            startWrapper.style.display = 'flex';
+            nextTip.style.display = 'none';
+            actionBtns.style.display = 'none';
+        } else {
+            startWrapper.style.display = 'none';
+            nextTip.style.display = 'block';
+            actionBtns.style.display = 'flex';
+        }
+        if (completed) {
+            nextTip.innerHTML = '<text>已完成</text>';
+        } else {
+            nextTip.innerHTML = `下一个数字: <span id="nextTarget" class="target-number">${nextTarget}</span>`;
+        }
+    }
+
+    // 开始计时
+    function startTiming() {
+        if (timer) clearInterval(timer);
+        startTime = Date.now();
+        timer = setInterval(() => {
+            if (!isPlaying || completed) return;
+            const elapsed = (Date.now() - startTime) / 1000;
+            timeElapsed = elapsed;
+            document.getElementById('timeDisplay').innerText = formatTime(timeElapsed) + ' s';
+        }, 100);
+        isPlaying = true;
+    }
+
+    function stopTiming() {
+        if (timer) {
+            clearInterval(timer);
+            timer = null;
+        }
+        isPlaying = false;
+    }
+
+    // 保存记录
+    function saveRecord(time, errors) {
+        let records = localStorage.getItem('schulte_records');
+        records = records ? JSON.parse(records) : [];
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+        records.push({ time: time, errors: errors, date: dateStr, timestamp: now.getTime() });
+        records.sort((a,b) => a.time - b.time);
+        if (records.length > 20) records = records.slice(0,20);
+        localStorage.setItem('schulte_records', JSON.stringify(records));
+    }
+
+    // 获取最快记录
+    function getBestTime() {
+        let records = localStorage.getItem('schulte_records');
+        if (!records) return null;
+        records = JSON.parse(records);
+        if (records.length === 0) return null;
+        return records[0].time;
+    }
+
+    // 完成游戏弹窗
+    function showSuccessModal() {
+        const finalTime = timeElapsed;
+        const best = getBestTime();
+        const bestText = best !== null ? `${best} 秒` : '暂无记录';
+        // 创建弹窗DOM
+        const modalDiv = document.createElement('div');
+        modalDiv.className = 'modal-mask';
+        modalDiv.id = 'successModal';
+        modalDiv.innerHTML = `
+            <div class="modal-container">
+                <div class="modal-title">🎉 挑战成功！ 🎉</div>
+                <div class="modal-time">用时：${finalTime.toFixed(2)} 秒</div>
+                <div class="modal-best">最快记录：${bestText}</div>
+                <div class="modal-encourage">太棒了！继续挑战，刷新记录吧！</div>
+                <div class="modal-buttons">
+                    <button class="modal-btn continue-btn" id="continueGameBtn">继续测试</button>
+                    <button class="modal-btn modal-standard-btn" id="modalStandardBtn">评分标准</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalDiv);
+        document.getElementById('continueGameBtn').addEventListener('click', () => {
+            modalDiv.remove();
+            resetToCover();
+        });
+        document.getElementById('modalStandardBtn').addEventListener('click', () => {
+            modalDiv.remove();
+            showStandard();
+        });
+    }
+
+    // 重置到遮盖状态
+    function resetToCover() {
+        stopTiming();
+        completed = false;
+        started = false;
+        isPlaying = false;
+        nextTarget = 1;
+        errorCount = 0;
+        timeElapsed = 0;
+        // 填充问号
+        gridData = new Array(totalCount).fill('?');
+        correctStates = new Array(totalCount).fill(false);
+        renderGrid();
+        updateUI();
+        if (timer) clearInterval(timer);
+        timer = null;
+    }
+
+    // 开始游戏（点击开始测试）
+    function startGame() {
+        if (started) return;
+        const newGrid = generateRandomGrid();
+        gridData = [...newGrid];
+        correctStates = new Array(totalCount).fill(false);
+        nextTarget = 1;
+        errorCount = 0;
+        timeElapsed = 0;
+        completed = false;
+        started = true;
+        isPlaying = true;
+        startTiming();
+        renderGrid();
+        updateUI();
+    }
+
+    // 处理点击格子
+    function onCellClick(index) {
+        if (!started || completed) return;
+        const number = gridData[index];
+        const alreadyCorrect = correctStates[index];
+        const currentTarget = nextTarget;
+        if (alreadyCorrect) {
+            errorCount++;
+            updateUI();
+            if (navigator.vibrate) navigator.vibrate(100);
+            alert(`数字 ${number} 已完成，重复点击`);
+            return;
+        }
+        if (number === currentTarget) {
+            // 正确
+            correctStates[index] = true;
+            nextTarget++;
+            // 添加临时反馈类
+            const cells = document.querySelectorAll('.grid-cell');
+            cells[index].classList.add('tap-feedback');
+            setTimeout(() => cells[index].classList.remove('tap-feedback'), 200);
+            if (navigator.vibrate) navigator.vibrate(50);
+            updateUI();
+            if (nextTarget === totalCount + 1) {
+                // 完成
+                completed = true;
+                stopTiming();
+                const finalTime = timeElapsed;
+                saveRecord(finalTime, errorCount);
+                showSuccessModal();
+                updateUI();
+            }
+        } else {
+            errorCount++;
+            updateUI();
+            if (navigator.vibrate) navigator.vibrate(150);
+            alert(`点错了！当前需要点 ${currentTarget}`);
+        }
+    }
+
+    // 新的一局（重置）
+    function resetGame() {
+        resetToCover();
+    }
+
+    // 排行榜展示
+    function showRank() {
+        let records = localStorage.getItem('schulte_records');
+        records = records ? JSON.parse(records) : [];
+        const bestTime = records.length > 0 ? records[0].time : null;
+        const bestText = bestTime !== null ? `${bestTime} 秒` : '暂无记录';
+        document.getElementById('bestTimeText').innerText = bestText;
+        const listDiv = document.getElementById('recordList');
+        listDiv.innerHTML = '';
+        if (records.length === 0) {
+            listDiv.innerHTML = '<div style="text-align:center; padding:20px;">暂无记录</div>';
+        } else {
+            records.forEach((r, idx) => {
+                const div = document.createElement('div');
+                div.style.margin = '8px 0';
+                div.style.fontSize = '14px';
+                div.innerHTML = `${idx+1}. 用时 ${r.time}秒  |  错误 ${r.errors}次  |  ${r.date}`;
+                listDiv.appendChild(div);
+            });
+        }
+        document.getElementById('rankModal').classList.remove('hidden');
+    }
+    function closeRank() {
+        document.getElementById('rankModal').classList.add('hidden');
+    }
+    function clearRecords() {
+        if (confirm('确认清空所有历史记录吗？')) {
+            localStorage.removeItem('schulte_records');
+            closeRank();
+            alert('已清空');
+        }
+    }
+
+    // 评分标准页面
+    function showStandard() {
+        document.getElementById('standardPage').classList.remove('hidden');
+        document.getElementById('gameView').style.display = 'none';
+    }
+    function closeStandard() {
+        document.getElementById('standardPage').classList.add('hidden');
+        document.getElementById('gameView').style.display = 'block';
+    }
+
+    // 初始化遮盖状态
+    function init() {
+        gridData = new Array(totalCount).fill('?');
+        correctStates = new Array(totalCount).fill(false);
+        renderGrid();
+        updateUI();
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('resetBtn').addEventListener('click', resetGame);
+        document.getElementById('rankBtn').addEventListener('click', showRank);
+        document.getElementById('standardBtn').addEventListener('click', showStandard);
+    }
+
+    init();
+</script>
+</body>
+</html>
