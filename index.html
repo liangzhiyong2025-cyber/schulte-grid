@@ -439,51 +439,9 @@
         return records[0].time;
     }
 
-    function finishGame() {
-        if (completed) return;
-        completed = true;
-        stopTiming();
-        const finalTime = timeElapsed;
-        const finalErrors = errorCount;
-        saveRecord(finalTime, finalErrors);
-        showSuccessModal(finalTime, finalErrors);
-        updateUI();
-    }
-
-    function showSuccessModal(finalTime, finalErrors) {
-        const best = getBestTime();
-        const bestText = best !== null ? `${best} 秒` : '暂无记录';
-        const oldModal = document.getElementById('successModal');
-        if (oldModal) oldModal.remove();
-        const modalDiv = document.createElement('div');
-        modalDiv.className = 'modal-mask';
-        modalDiv.id = 'successModal';
-        modalDiv.innerHTML = `
-            <div class="modal-container">
-                <div class="modal-title">🎉 挑战成功！ 🎉</div>
-                <div class="modal-time">用时：${finalTime.toFixed(2)} 秒</div>
-                <div class="modal-best">最快记录：${bestText}</div>
-                <div class="modal-encourage">太棒了！继续挑战，刷新记录吧！</div>
-                <div class="modal-buttons">
-                    <button class="modal-btn continue-btn" id="continueGameBtn">继续测试</button>
-                    <button class="modal-btn modal-standard-btn" id="modalStandardBtn">评分标准</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modalDiv);
-        document.getElementById('continueGameBtn').addEventListener('click', () => {
-            modalDiv.remove();
-            resetToCover();
-        });
-        document.getElementById('modalStandardBtn').addEventListener('click', () => {
-            modalDiv.remove();
-            showStandard();
-        });
-    }
-
+    // 完全重置游戏（回到未开始状态，显示问号）
     function resetToCover() {
-        if (timer) clearInterval(timer);
-        timer = null;
+        stopTiming();
         completed = false;
         started = false;
         isPlaying = false;
@@ -496,9 +454,11 @@
         updateUI();
     }
 
-    function startGame() {
-        if (started) return;
+    // 开始新游戏（直接开始，无需点击开始按钮）
+    function startNewGame() {
+        // 完全重置
         resetToCover();
+        // 生成新数字
         const newGrid = generateRandomGrid();
         gridData = [...newGrid];
         correctStates = new Array(totalCount).fill(false);
@@ -511,6 +471,12 @@
         startTiming();
         renderGrid();
         updateUI();
+    }
+
+    // 手动开始（点击开始按钮时调用）
+    function startGame() {
+        if (started) return;
+        startNewGame();
     }
 
     function onCellClick(index) {
@@ -547,8 +513,50 @@
         }
     }
 
+    function finishGame() {
+        if (completed) return;
+        completed = true;
+        stopTiming();
+        const finalTime = timeElapsed;
+        const finalErrors = errorCount;
+        saveRecord(finalTime, finalErrors);
+        showSuccessModal(finalTime, finalErrors);
+        updateUI();
+    }
+
+    function showSuccessModal(finalTime, finalErrors) {
+        const best = getBestTime();
+        const bestText = best !== null ? `${best} 秒` : '暂无记录';
+        const oldModal = document.getElementById('successModal');
+        if (oldModal) oldModal.remove();
+        const modalDiv = document.createElement('div');
+        modalDiv.className = 'modal-mask';
+        modalDiv.id = 'successModal';
+        modalDiv.innerHTML = `
+            <div class="modal-container">
+                <div class="modal-title">🎉 挑战成功！ 🎉</div>
+                <div class="modal-time">用时：${finalTime.toFixed(2)} 秒</div>
+                <div class="modal-best">最快记录：${bestText}</div>
+                <div class="modal-encourage">太棒了！继续挑战，刷新记录吧！</div>
+                <div class="modal-buttons">
+                    <button class="modal-btn continue-btn" id="continueGameBtn">继续测试</button>
+                    <button class="modal-btn modal-standard-btn" id="modalStandardBtn">评分标准</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalDiv);
+        document.getElementById('continueGameBtn').addEventListener('click', () => {
+            modalDiv.remove();
+            startNewGame();  // 直接开始新游戏
+        });
+        document.getElementById('modalStandardBtn').addEventListener('click', () => {
+            modalDiv.remove();
+            showStandard();
+        });
+    }
+
     function resetGame() {
-        resetToCover();
+        startNewGame();  // 新的一局直接开始新游戏
     }
 
     function showRank() {
@@ -596,10 +604,7 @@
     }
 
     function init() {
-        gridData = new Array(totalCount).fill('?');
-        correctStates = new Array(totalCount).fill(false);
-        renderGrid();
-        updateUI();
+        resetToCover();  // 初始显示问号
         document.getElementById('startBtn').addEventListener('click', startGame);
         document.getElementById('resetBtn').addEventListener('click', resetGame);
         document.getElementById('rankBtn').addEventListener('click', showRank);
