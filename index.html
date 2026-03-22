@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>舒尔特方格 - 专注力训练</title>
     <style>
-        /* 样式同前，此处省略以节约篇幅，实际使用需包含完整样式 */
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
@@ -144,6 +143,7 @@
             color: #95a5a6;
             margin-top: 30px;
         }
+        /* 弹窗样式 */
         .modal-mask {
             position: fixed;
             top: 0;
@@ -212,6 +212,7 @@
             background: #9b59b6;
             color: white;
         }
+        /* 评分标准页面 */
         .standard-page {
             position: fixed;
             top: 0;
@@ -359,7 +360,6 @@
             cell.className = 'grid-cell';
             cell.innerText = gridData[i];
             cell.dataset.index = i;
-            // 移除旧监听器，避免重复绑定（使用新函数引用，但每次重新创建cell，监听器会自动添加）
             cell.addEventListener('click', (e) => {
                 e.stopPropagation();
                 onCellClick(parseInt(cell.dataset.index));
@@ -371,8 +371,7 @@
     function updateUI() {
         document.getElementById('timeDisplay').innerText = formatTime(timeElapsed) + ' s';
         document.getElementById('errorCount').innerText = errorCount;
-        const nextTargetSpan = document.getElementById('nextTarget');
-        if (nextTargetSpan) nextTargetSpan.innerText = nextTarget;
+        document.getElementById('nextTarget').innerText = nextTarget;
         const startWrapper = document.getElementById('startBtnWrapper');
         const nextTip = document.getElementById('nextTip');
         const actionBtns = document.getElementById('actionButtons');
@@ -490,9 +489,7 @@
 
     function startGame() {
         if (started) return;
-        // 重置状态确保干净
         resetToCover();
-        // 生成随机排列
         const newGrid = generateRandomGrid();
         gridData = [...newGrid];
         correctStates = new Array(totalCount).fill(false);
@@ -587,7 +584,11 @@
     function closeStandard() {
         document.getElementById('standardPage').classList.add('hidden');
         document.getElementById('gameView').style.display = 'block';
-        // 确保游戏视图可交互，状态不变（可能游戏正在进行中，恢复显示即可）
+        // 关键：返回主页面后重新激活交互（无需额外操作，只是显示恢复）
+        // 但要确保此时游戏状态未被改变，started 仍为之前的值
+        // 如果返回时游戏已结束或未开始，UI 会正确显示开始按钮，点击即可开始
+        // 如果返回时游戏进行中，但页面被隐藏期间计时未停，这里恢复显示后用户可继续点击
+        // 但计时器一直运行，显示没问题。
     }
 
     function init() {
@@ -595,24 +596,10 @@
         correctStates = new Array(totalCount).fill(false);
         renderGrid();
         updateUI();
-        // 重新绑定事件（确保按钮监听存在）
-        const startBtn = document.getElementById('startBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const rankBtn = document.getElementById('rankBtn');
-        const standardBtn = document.getElementById('standardBtn');
-        // 移除旧监听器（如果存在），避免重复绑定
-        startBtn.replaceWith(startBtn.cloneNode(true));
-        resetBtn.replaceWith(resetBtn.cloneNode(true));
-        rankBtn.replaceWith(rankBtn.cloneNode(true));
-        standardBtn.replaceWith(standardBtn.cloneNode(true));
-        const newStartBtn = document.getElementById('startBtn');
-        const newResetBtn = document.getElementById('resetBtn');
-        const newRankBtn = document.getElementById('rankBtn');
-        const newStandardBtn = document.getElementById('standardBtn');
-        newStartBtn.addEventListener('click', startGame);
-        newResetBtn.addEventListener('click', resetGame);
-        newRankBtn.addEventListener('click', showRank);
-        newStandardBtn.addEventListener('click', showStandard);
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('resetBtn').addEventListener('click', resetGame);
+        document.getElementById('rankBtn').addEventListener('click', showRank);
+        document.getElementById('standardBtn').addEventListener('click', showStandard);
     }
 
     init();
