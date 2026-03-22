@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>舒尔特方格 - 专注力训练</title>
     <style>
+        /* 样式同前，此处省略以节约篇幅，实际使用需包含完整样式 */
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
@@ -26,6 +27,7 @@
             text-align: center;
             color: #2c3e50;
             margin-bottom: 24px;
+            letter-spacing: 1px;
         }
         .info-panel {
             display: flex;
@@ -66,6 +68,7 @@
             padding: 14px 48px;
             cursor: pointer;
             box-shadow: 0 8px 16px rgba(46,204,113,0.3);
+            transition: 0.2s;
         }
         .next-tip {
             background: linear-gradient(135deg, #3498db, #2980b9);
@@ -76,6 +79,7 @@
             color: white;
             font-size: 18px;
             font-weight: 500;
+            box-shadow: 0 4px 10px rgba(52,152,219,0.3);
         }
         .target-number {
             font-size: 24px;
@@ -104,11 +108,14 @@
             font-size: 44px;
             font-weight: 600;
             color: #2c3e50;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: none;
             cursor: pointer;
-            transition: background-color 0.05s;
+            touch-action: manipulation;
         }
         .grid-cell.tap-feedback {
             background-color: #2ecc71 !important;
+            transition: background-color 0.05s linear;
         }
         .action-buttons {
             display: flex;
@@ -126,6 +133,7 @@
             text-align: center;
             background: #3498db;
             color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .reset-btn { background: linear-gradient(135deg, #e67e22, #d35400); }
         .rank-btn { background: linear-gradient(135deg, #3498db, #2980b9); }
@@ -232,6 +240,7 @@
             color: #2c3e50;
             margin: 16px 0;
             text-align: center;
+            line-height: 1.4;
         }
         .standard-table {
             background: white;
@@ -318,7 +327,7 @@
 </div>
 
 <script>
-    // 游戏状态
+    // ---------- 游戏状态 ----------
     let gridData = [];
     let correctStates = [];
     let nextTarget = 1;
@@ -330,15 +339,6 @@
     let timer = null;
     let startTime = 0;
     const totalCount = 25;
-
-    // DOM 元素引用
-    const timeDisplay = document.getElementById('timeDisplay');
-    const errorDisplay = document.getElementById('errorCount');
-    const nextTargetSpan = document.getElementById('nextTarget');
-    const startBtnWrapper = document.getElementById('startBtnWrapper');
-    const nextTip = document.getElementById('nextTip');
-    const actionBtns = document.getElementById('actionButtons');
-    const gridDiv = document.getElementById('grid');
 
     function formatTime(sec) { return sec.toFixed(2); }
 
@@ -352,12 +352,14 @@
     }
 
     function renderGrid() {
+        const gridDiv = document.getElementById('grid');
         gridDiv.innerHTML = '';
         for (let i = 0; i < gridData.length; i++) {
             const cell = document.createElement('div');
             cell.className = 'grid-cell';
             cell.innerText = gridData[i];
             cell.dataset.index = i;
+            // 移除旧监听器，避免重复绑定（使用新函数引用，但每次重新创建cell，监听器会自动添加）
             cell.addEventListener('click', (e) => {
                 e.stopPropagation();
                 onCellClick(parseInt(cell.dataset.index));
@@ -367,27 +369,26 @@
     }
 
     function updateUI() {
-        timeDisplay.innerText = formatTime(timeElapsed) + ' s';
-        errorDisplay.innerText = errorCount;
-        nextTargetSpan.innerText = nextTarget;
-
+        document.getElementById('timeDisplay').innerText = formatTime(timeElapsed) + ' s';
+        document.getElementById('errorCount').innerText = errorCount;
+        const nextTargetSpan = document.getElementById('nextTarget');
+        if (nextTargetSpan) nextTargetSpan.innerText = nextTarget;
+        const startWrapper = document.getElementById('startBtnWrapper');
+        const nextTip = document.getElementById('nextTip');
+        const actionBtns = document.getElementById('actionButtons');
         if (!started || completed) {
-            startBtnWrapper.style.display = 'flex';
+            startWrapper.style.display = 'flex';
             nextTip.style.display = 'none';
             actionBtns.style.display = 'none';
         } else {
-            startBtnWrapper.style.display = 'none';
+            startWrapper.style.display = 'none';
             nextTip.style.display = 'block';
             actionBtns.style.display = 'flex';
         }
-
         if (completed) {
             nextTip.innerHTML = '<text>已完成</text>';
         } else {
             nextTip.innerHTML = `下一个数字: <span id="nextTarget" class="target-number">${nextTarget}</span>`;
-            // 重新绑定 nextTargetSpan 因为上面 innerHTML 替换了原元素
-            const newSpan = document.getElementById('nextTarget');
-            if (newSpan) newSpan.innerText = nextTarget;
         }
     }
 
@@ -398,7 +399,7 @@
             if (!isPlaying || completed) return;
             const elapsed = (Date.now() - startTime) / 1000;
             timeElapsed = elapsed;
-            timeDisplay.innerText = formatTime(timeElapsed) + ' s';
+            document.getElementById('timeDisplay').innerText = formatTime(timeElapsed) + ' s';
         }, 100);
         isPlaying = true;
     }
@@ -430,9 +431,22 @@
         return records[0].time;
     }
 
+    function finishGame() {
+        if (completed) return;
+        completed = true;
+        stopTiming();
+        const finalTime = timeElapsed;
+        const finalErrors = errorCount;
+        saveRecord(finalTime, finalErrors);
+        showSuccessModal(finalTime, finalErrors);
+        updateUI();
+    }
+
     function showSuccessModal(finalTime, finalErrors) {
         const best = getBestTime();
         const bestText = best !== null ? `${best} 秒` : '暂无记录';
+        const oldModal = document.getElementById('successModal');
+        if (oldModal) oldModal.remove();
         const modalDiv = document.createElement('div');
         modalDiv.className = 'modal-mask';
         modalDiv.id = 'successModal';
@@ -459,19 +473,7 @@
         });
     }
 
-    function finishGame() {
-        if (completed) return;
-        completed = true;
-        stopTiming();
-        const finalTime = timeElapsed;
-        const finalErrors = errorCount;
-        saveRecord(finalTime, finalErrors);
-        showSuccessModal(finalTime, finalErrors);
-        updateUI();
-    }
-
     function resetToCover() {
-        // 彻底重置所有状态
         if (timer) clearInterval(timer);
         timer = null;
         completed = false;
@@ -488,9 +490,9 @@
 
     function startGame() {
         if (started) return;
-        // 重置所有状态（确保干净）
+        // 重置状态确保干净
         resetToCover();
-        // 生成新数据
+        // 生成随机排列
         const newGrid = generateRandomGrid();
         gridData = [...newGrid];
         correctStates = new Array(totalCount).fill(false);
@@ -585,14 +587,32 @@
     function closeStandard() {
         document.getElementById('standardPage').classList.add('hidden');
         document.getElementById('gameView').style.display = 'block';
+        // 确保游戏视图可交互，状态不变（可能游戏正在进行中，恢复显示即可）
     }
 
     function init() {
-        resetToCover(); // 初始遮盖
-        document.getElementById('startBtn').addEventListener('click', startGame);
-        document.getElementById('resetBtn').addEventListener('click', resetGame);
-        document.getElementById('rankBtn').addEventListener('click', showRank);
-        document.getElementById('standardBtn').addEventListener('click', showStandard);
+        gridData = new Array(totalCount).fill('?');
+        correctStates = new Array(totalCount).fill(false);
+        renderGrid();
+        updateUI();
+        // 重新绑定事件（确保按钮监听存在）
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const rankBtn = document.getElementById('rankBtn');
+        const standardBtn = document.getElementById('standardBtn');
+        // 移除旧监听器（如果存在），避免重复绑定
+        startBtn.replaceWith(startBtn.cloneNode(true));
+        resetBtn.replaceWith(resetBtn.cloneNode(true));
+        rankBtn.replaceWith(rankBtn.cloneNode(true));
+        standardBtn.replaceWith(standardBtn.cloneNode(true));
+        const newStartBtn = document.getElementById('startBtn');
+        const newResetBtn = document.getElementById('resetBtn');
+        const newRankBtn = document.getElementById('rankBtn');
+        const newStandardBtn = document.getElementById('standardBtn');
+        newStartBtn.addEventListener('click', startGame);
+        newResetBtn.addEventListener('click', resetGame);
+        newRankBtn.addEventListener('click', showRank);
+        newStandardBtn.addEventListener('click', showStandard);
     }
 
     init();
