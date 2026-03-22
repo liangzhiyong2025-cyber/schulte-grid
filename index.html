@@ -143,6 +143,12 @@
             color: #95a5a6;
             margin-top: 30px;
         }
+        .version {
+            margin-top: 12px;
+            font-size: 11px;
+            color: #bdc3c7;
+            text-align: center;
+        }
         /* 弹窗样式 */
         .modal-mask {
             position: fixed;
@@ -295,7 +301,10 @@
             <button class="btn rank-btn" id="rankBtn">排行榜</button>
             <button class="btn standard-btn" id="standardBtn">评分标准</button>
         </div>
-        <div class="footer">按顺序从 1 点击到 25 | 点错会累计失误次数</div>
+        <div class="footer">
+            <div>按顺序从 1 点击到 25 | 点错会累计失误次数</div>
+            <div class="version">版本 1.0 (2026.03.22)</div>
+        </div>
     </div>
 
     <div id="rankModal" class="modal-mask hidden" onclick="closeRank()">
@@ -584,11 +593,6 @@
     function closeStandard() {
         document.getElementById('standardPage').classList.add('hidden');
         document.getElementById('gameView').style.display = 'block';
-        // 关键：返回主页面后重新激活交互（无需额外操作，只是显示恢复）
-        // 但要确保此时游戏状态未被改变，started 仍为之前的值
-        // 如果返回时游戏已结束或未开始，UI 会正确显示开始按钮，点击即可开始
-        // 如果返回时游戏进行中，但页面被隐藏期间计时未停，这里恢复显示后用户可继续点击
-        // 但计时器一直运行，显示没问题。
     }
 
     function init() {
